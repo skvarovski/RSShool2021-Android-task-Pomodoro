@@ -53,12 +53,20 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        //if (requestCode == REQUEST_CODE_RESUME ) {
+            Log.d("TEST","RESUME REQUEST CODE")
+        //}
+    }
+
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
         Log.d("TEST","LifeCycle on STOP EVENT")
         //если есть запущеный таймер и у него есть еще время
         val stopwatchCurrentTimer = stopwatches.find { it.isStarted }
         if (stopwatchCurrentTimer != null && stopwatchCurrentTimer.currentMs > 0L) {
+            Log.d("TEST","StopWats = $stopwatchCurrentTimer")
             stopwatchCurrentTimer.timer?.cancel()
             //stopwatchCurrentTimer.isStarted = false
             val startIntent = Intent(this, ForegroundService::class.java)
@@ -72,6 +80,8 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     fun onAppForegrounded() {
         Log.d("TEST","LifeCycle on START EVENT")
+        val stopwatchCurrentTimer = stopwatches.find { it.isStarted }
+        Log.d("TEST","StopWats = $stopwatchCurrentTimer")
         //даём команду-интент остановки сервису
         val stopIntent = Intent(this, ForegroundService::class.java)
         stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)

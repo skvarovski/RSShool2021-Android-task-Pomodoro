@@ -157,7 +157,7 @@ class ForegroundService : Service() {
         val resultIntent = Intent(this, MainActivity::class.java)
         resultIntent.putExtra(LAST_TIME_MS,1100L)
         resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-        return PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_ONE_SHOT)
+        return PendingIntent.getActivity(this, REQUEST_CODE_RESUME, resultIntent, PendingIntent.FLAG_ONE_SHOT)
     }
 
     private companion object {
