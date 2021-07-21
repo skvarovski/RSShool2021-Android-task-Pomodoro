@@ -1,27 +1,39 @@
 package ru.lacars.mypomodo
 
 import android.annotation.SuppressLint
-import android.content.res.Resources
 import android.graphics.drawable.AnimationDrawable
 import android.os.CountDownTimer
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.recyclerview.widget.RecyclerView
 import ru.lacars.mypomodo.databinding.StopwatchItemBinding
 
 class StopwatchViewHolder(
     private val binding: StopwatchItemBinding,
-    private val listener: StopwatchListener,
-    private val resources: Resources
+    private val listener: StopwatchListener
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    private var timer: CountDownTimer? = null
+    //private var timer: CountDownTimer? = null
 
     fun bind(stopwatch: Stopwatch) {
+
+        //назначаем исходные данные
         binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
         binding.circleCustomView.setPeriod(stopwatch.startMs)
         binding.circleCustomView.setCurrent(stopwatch.currentMs)
+        // используем PositionID иначе сложно отловить
+        //stopwatch.positionId = adapterPosition
+
+
+        // из-за того, что переиспользовался одинаковый холдер необходим костыль :)
+        // ну или ковыряемся в DiffUtill
+        /*if (stopwatch.isFinished) {
+            endTimer(stopwatch)
+        } else {
+            preStartTimer(stopwatch)
+        }*/
+
+        // что бы это срабатывало, нужно notifyDataChange
 
         if (stopwatch.isStarted) {
             startTimer(stopwatch)
@@ -29,110 +41,152 @@ class StopwatchViewHolder(
             stopTimer(stopwatch)
         }
 
+
+
         initButtonsListeners(stopwatch)
     }
 
     private fun initButtonsListeners(stopwatch: Stopwatch) {
-        binding.startPauseButton.setOnClickListener {
-            Log.d("TEST","$stopwatch")
-            if (stopwatch.isStarted) {
-                listener.stop(stopwatch.id, stopwatch.currentMs)
-            } else {
-                listener.start(stopwatch.id)
+        if (stopwatch.isStarted) {
+            with(binding) {
+                startPauseButton.setOnClickListener{
+                    stopwatch.timer?.cancel()
+                    listener.stop(stopwatch.id, stopwatch.currentMs)
+                }
+            }
+
+        } else {
+            with(binding) {
+                startPauseButton.setOnClickListener{
+                    //если тайминг не закончился
+                    if (stopwatch.currentMs != 0L) {
+                        listener.start(stopwatch.id, stopwatch.currentMs)
+                    } else {
+                        listener.toast("Таймер закончился")
+                    }
+                }
             }
         }
 
-        binding.restartButton.setOnClickListener { listener.reset(stopwatch.id) }
+        /*binding.startPauseButton.setOnClickListener {
+            //setIsRecyclable(false)
+            if (stopwatch.isStarted) {
+                stopwatch.timer?.cancel()
+                listener.stop(stopwatch.id, stopwatch.currentMs)
 
-        binding.deleteButton.setOnClickListener { listener.delete(stopwatch.id) }
+            } else {
+                listener.start(stopwatch.id, stopwatch.currentMs)
+                startTimer(stopwatch)
+
+            }
+            //Log.d("TEST","Button click start/stop = $stopwatch")
+        }*/
+
+
+        binding.deleteButton.setOnClickListener {
+            //setIsRecyclable(true)
+
+            stopwatch.isStarted = false
+            (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+            stopwatch.timer?.cancel()
+            listener.delete(stopwatch.id)
+        }
+    }
+
+
+    //пред подготовка перед стартом, устанавливаем правильные данные
+    private fun preStartTimer(stopwatch: Stopwatch) {
+        binding.circleCustomView.setCurrent(stopwatch.currentMs)
+        binding.startPauseButton.isEnabled = true
+        binding.stopwatchLayout.background = null
+        binding.startPauseButton.text = "START"
     }
 
     private fun startTimer(stopwatch: Stopwatch) {
         //val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_24)
         //binding.startPauseButton.setImageDrawable(drawable)
-        binding.startPauseButton.text = "START"
-        binding.circleCustomView.setCurrent(stopwatch.currentMs)
-        binding.startPauseButton.isEnabled = true
+        //preStartTimer(stopwatch)
 
-        timer?.cancel()
-        timer = getCountDownTimer(stopwatch)
-        timer?.start()
+        stopwatch.timer?.cancel()
+        stopwatch.timer = getCountDownTimer(stopwatch)
+        stopwatch.timer?.start()
 
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
+
     }
 
     private fun stopTimer(stopwatch: Stopwatch) {
-        //val drawable = resources.getDrawable(R.drawable.ic_baseline_play_arrow_24)
-        //binding.startPauseButton.setImageDrawable(drawable)
-        binding.startPauseButton.text = "STOP"
+
+        stopwatch.timer?.cancel()
+        //stopwatch.timer = null
         binding.circleCustomView.setCurrent(stopwatch.currentMs)
-
-        timer?.cancel()
-
+        stopwatch.isStarted = false
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+        binding.startPauseButton.text = "START"
+
+
+
+
     }
 
-
+    // когда таймер остановлен по времени
+    @SuppressLint("UseCompatLoadingForDrawables")
     private fun endTimer(stopwatch: Stopwatch) {
         stopTimer(stopwatch)
+        stopwatch.timer?.cancel()
+        //stopwatch.timer = null
+        Log.d("TEST","End Timer")
+        //stopwatch.isFinished = true
         binding.startPauseButton.isEnabled = false
-        binding.stopwatchLayout.background = resources.getDrawable(R.color.purple_200)
+        binding.blinkingIndicator.isInvisible = true
+        binding.stopwatchLayout.background = binding.root.context.resources.getDrawable(R.color.purple_200) //resources.getDrawable(R.color.purple_200)
+        (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
 
     }
 
     private fun getCountDownTimer(stopwatch: Stopwatch): CountDownTimer {
-        return object : CountDownTimer(stopwatch.startMs, UNIT_INTERVAL) {
-            val interval = UNIT_INTERVAL
+        return object : CountDownTimer(stopwatch.currentMs, UNIT_INTERVAL) {
 
             override fun onTick(millisUntilFinished: Long) {
-                stopwatch.currentMs -= interval
+                //Log.d("TEST","$millisUntilFinished")
+                stopwatch.currentMs = millisUntilFinished
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
                 binding.circleCustomView.setCurrent(stopwatch.currentMs)
+                binding.startPauseButton.text = "STOP"
+
+                //остановка таймера неестественным способом (уход ниже нуля)
+                /*if (stopwatch.currentMs <= 0L) {
+                    this.onFinish()
+                    endTimer(stopwatch)
+                }*/
 
             }
-
+            //остановка таймера естественным способом.
             override fun onFinish() {
                 stopwatch.currentMs = 0L
-                endTimer(stopwatch)
+                binding.circleCustomView.setCurrent(stopwatch.currentMs)
+                stopTimer(stopwatch) //endTimer(stopwatch)
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
-                Log.d("TEST","$stopwatch")
+                Log.d("TEST","finish $stopwatch")
+
                 //ContextCompat.getColor(resources.,R.color.purple_200)
+                //binding.startPauseButton.isEnabled = false
+                binding.blinkingIndicator.isInvisible = true
+                //binding.stopwatchLayout.background = binding.root.context.resources.getDrawable(R.color.purple_200) //resources.getDrawable(R.color.purple_200)
+                (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+                listener.toast("Timer finished")
 
             }
         }
     }
 
-    private fun Long.displayTime(): String {
-        if (this <= 0L ) {
-            return END_TIME
-        }
 
-        val h = this / 1000 / 3600
-        val m = this / 1000 % 3600 / 60
-        val s = this / 1000 % 60
-        //val ms = this % 1000 / 10
-
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}" //:${displaySlot(ms)}
-    }
-
-    private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
-            "$count"
-        } else {
-            "0$count"
-        }
-    }
 
     private companion object {
-
         private const val UNIT_INTERVAL = 100L
         private const val END_TIME = "00:00:00"
 
-        //private const val START_TIME = "00:00:00" //:00
-        //private const val PERIOD = 1000L *  60L * 24L // Day
-        //private const val UNIT_TEN_MS = 10L
-        //private const val PERIOD stopwatch. //= 1000L *  60L * 24L // Day
     }
 }
