@@ -41,6 +41,7 @@ class CircleCustomView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         //if (periodMs == 0L || currentMs == 0L) return
+        // хак для отображения при нуле
         val startAngel = ((((currentMs - periodMs + 1L) % periodMs).toFloat() / periodMs) * -360)
 
         canvas.drawArc(

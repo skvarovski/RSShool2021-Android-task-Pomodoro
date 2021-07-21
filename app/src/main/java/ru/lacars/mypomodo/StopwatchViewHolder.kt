@@ -13,8 +13,6 @@ class StopwatchViewHolder(
     private val listener: StopwatchListener
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    //private var timer: CountDownTimer? = null
-
     fun bind(stopwatch: Stopwatch) {
 
         //назначаем исходные данные
@@ -33,8 +31,7 @@ class StopwatchViewHolder(
             preStartTimer(stopwatch)
         }*/
 
-        // что бы это срабатывало, нужно notifyDataChange
-
+        // что бы это срабатывало, нужно notifyDataChange или глубже оптимизировать
         if (stopwatch.isStarted) {
             startTimer(stopwatch)
         } else {
@@ -103,10 +100,8 @@ class StopwatchViewHolder(
     }
 
     private fun startTimer(stopwatch: Stopwatch) {
-        //val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_24)
-        //binding.startPauseButton.setImageDrawable(drawable)
-        //preStartTimer(stopwatch)
 
+        // пристёгиваем синглтон обьект к текущему обьекту
         stopwatch.timer?.cancel()
         stopwatch.timer = getCountDownTimer(stopwatch)
         stopwatch.timer?.start()
@@ -141,7 +136,7 @@ class StopwatchViewHolder(
         //stopwatch.isFinished = true
         binding.startPauseButton.isEnabled = false
         binding.blinkingIndicator.isInvisible = true
-        binding.stopwatchLayout.background = binding.root.context.resources.getDrawable(R.color.purple_200) //resources.getDrawable(R.color.purple_200)
+        //binding.stopwatchLayout.background = binding.root.context.resources.getDrawable(R.color.purple_200) //resources.getDrawable(R.color.purple_200)
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
 
     }

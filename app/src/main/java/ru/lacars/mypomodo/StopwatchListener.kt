@@ -1,6 +1,5 @@
 package ru.lacars.mypomodo
 
-import android.os.CountDownTimer
 
 interface StopwatchListener {
 
