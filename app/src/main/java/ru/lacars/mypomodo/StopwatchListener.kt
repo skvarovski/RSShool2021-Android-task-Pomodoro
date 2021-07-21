@@ -4,13 +4,12 @@ import android.os.CountDownTimer
 
 interface StopwatchListener {
 
-    fun start(positionId: Int, currentMs: Long)
+    fun start(id: Int, currentMs: Long)
 
-    fun stop(positionId: Int, currentMs: Long)
+    fun stop(id: Int, currentMs: Long)
 
-    fun delete(positionId: Int)
+    fun delete(id: Int)
 
     fun toast(message: String)
 
-    fun setTimer(timer: CountDownTimer, positionId: Int)
 }
