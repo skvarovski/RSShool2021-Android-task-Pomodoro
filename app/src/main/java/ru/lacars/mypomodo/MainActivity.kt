@@ -1,24 +1,27 @@
 package ru.lacars.mypomodo
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.util.Log
-import android.util.TypedValue
+
 import android.widget.Toast
+import androidx.lifecycle.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import ru.lacars.mypomodo.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), StopwatchListener {
+class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     private lateinit var binding: ActivityMainBinding
 
     private val stopwatchAdapter = StopwatchAdapter(this)
     private val stopwatches = mutableListOf<Stopwatch>()
     private var nextId = 0
+    private var startTime = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -37,20 +40,47 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
             stopwatchAdapter.submitList(stopwatches.toList())
 
         }
-    }
 
-    private fun getBackgroundColor(id: Int): Int {
-
-        val typedValue = TypedValue()
-        /*if (stopwatches[id].isFinished) {
-            theme.resolveAttribute(R.attr.colorSecondaryVariant, typedValue,true)
-        } else {
-            //theme.resolveAttribute(R.attr.windowBackground,typedValue,true)
+        //тестовое время
+        startTime = 6000L
+        /*lifecycleScope.launch(Dispatchers.Main) {
+            while (true) {
+                binding.timerView.text = (System.currentTimeMillis() - startTime).displayTime()
+                delay(INTERVAL)
+            }
         }*/
 
-        return typedValue.data
 
     }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onAppBackgrounded() {
+        Log.d("TEST","LifeCycle on STOP EVENT")
+        val stopwatchCurrentTimer = stopwatches.find { it.isStarted }
+        if (stopwatchCurrentTimer != null && stopwatchCurrentTimer.currentMs > 0L) {
+            stopwatchCurrentTimer.timer?.cancel()
+            //stopwatchCurrentTimer.isStarted = false
+            val startIntent = Intent(this, ForegroundService::class.java)
+            startIntent.putExtra(COMMAND_ID, COMMAND_START)
+            // закидываем будущее время окончания (текущий остаток + текущее время)
+            startIntent.putExtra(STARTED_TIMER_TIME_MS, stopwatchCurrentTimer.currentMs + System.currentTimeMillis())
+            startService(startIntent)
+        }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onAppForegrounded() {
+        val stopIntent = Intent(this, ForegroundService::class.java)
+        stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
+        startService(stopIntent)
+    }
+
+    private companion object {
+
+        private const val INTERVAL = 10L
+    }
+
+
 
 
     override fun start(id: Int, currentMs: Long) {
@@ -60,8 +90,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     override fun stop(id: Int, currentMs: Long) {
         changeStopwatch(id, currentMs, false)
     }
-
-
 
     override fun delete(id: Int) {
         stopwatches.remove(stopwatches.find { it.id == id })
@@ -75,23 +103,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
 
     }
 
-    override fun setTimer(timer: CountDownTimer, positionId: Int) {
-        TODO("Not yet implemented")
-    }
-
-
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
-        //val newTimers = mutableListOf<Stopwatch>()
-        //перебор всех таймеров
-        stopwatches.forEach {
-            /*if (it.id == id) {
-                newTimers.add(Stopwatch(it.id,it.positionId, it.startMs, currentMs ?: it.currentMs, isStarted ))
-            } else {
-                //остальные таймеры по умолчанию - остановленные.
-                newTimers.add(Stopwatch(it.id, it.positionId, it.startMs, it.currentMs, false))
-            }*/
-        }
-
         stopwatches.forEach {
             if (it.id == id) {
                 it.isStarted = isStarted
@@ -100,10 +112,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
                 it.isStarted = false
             }
         }
-
-
         Log.d("TEST","Change watch = ${stopwatches.find { it.id == id }}")
-
 
         //stopwatches.clear()
         //stopwatches.addAll(newTimers)
