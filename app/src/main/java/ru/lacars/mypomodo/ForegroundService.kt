@@ -155,6 +155,7 @@ class ForegroundService : Service() {
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun getPendingIntent(): PendingIntent? {
         val resultIntent = Intent(this, MainActivity::class.java)
+        resultIntent.putExtra(LAST_TIME_MS,1100L)
         resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         return PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_ONE_SHOT)
     }

@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }
 
         //тестовое время
-        startTime = 6000L
+        //startTime = 6000L
         /*lifecycleScope.launch(Dispatchers.Main) {
             while (true) {
                 binding.timerView.text = (System.currentTimeMillis() - startTime).displayTime()
@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
         Log.d("TEST","LifeCycle on STOP EVENT")
+        //если есть запущеный таймер и у него есть еще время
         val stopwatchCurrentTimer = stopwatches.find { it.isStarted }
         if (stopwatchCurrentTimer != null && stopwatchCurrentTimer.currentMs > 0L) {
             stopwatchCurrentTimer.timer?.cancel()
@@ -70,17 +71,14 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     fun onAppForegrounded() {
+        Log.d("TEST","LifeCycle on START EVENT")
+        //даём команду-интент остановки сервису
         val stopIntent = Intent(this, ForegroundService::class.java)
         stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
         startService(stopIntent)
+
+        //необходимо получить оставшеся время и попытаться продолжить отсчёт
     }
-
-    private companion object {
-
-        private const val INTERVAL = 10L
-    }
-
-
 
 
     override fun start(id: Int, currentMs: Long) {
