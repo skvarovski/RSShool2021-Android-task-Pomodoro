@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.core.view.isInvisible
 import androidx.recyclerview.widget.RecyclerView
 import ru.lacars.mypomodo.databinding.StopwatchItemBinding
+import androidx.appcompat.content.res.AppCompatResources.getDrawable
 
 class StopwatchViewHolder(
     private val binding: StopwatchItemBinding,
@@ -14,6 +15,7 @@ class StopwatchViewHolder(
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(stopwatch: Stopwatch) {
+        setIsRecyclable(false)
 
         //назначаем исходные данные
         binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()

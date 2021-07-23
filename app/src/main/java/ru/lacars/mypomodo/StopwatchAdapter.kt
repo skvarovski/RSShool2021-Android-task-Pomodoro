@@ -21,6 +21,14 @@ class StopwatchAdapter(
         holder.bind(getItem(position))
     }
 
+    override fun getItemId(position: Int): Long {
+        return super.getItemId(position)
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return super.getItemViewType(position)
+    }
+
     private companion object {
 
         private val itemComparator = object : DiffUtil.ItemCallback<Stopwatch>() {

@@ -7,12 +7,14 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
+
 
 class ForegroundService : Service() {
 
@@ -80,7 +82,9 @@ class ForegroundService : Service() {
     private fun continueTimer(endTime: Long) {
         job = GlobalScope.launch(Dispatchers.Main) {
             var howTikTakTimer = endTime - System.currentTimeMillis()
+            updateStorage(howTikTakTimer)
             while (howTikTakTimer > 0L) {
+
                 notificationManager?.notify(
                     NOTIFICATION_ID,
                     getNotification(
@@ -88,6 +92,7 @@ class ForegroundService : Service() {
                     )
                 )
                 delay(INTERVAL)
+                updateStorage(howTikTakTimer)
                 howTikTakTimer = endTime - System.currentTimeMillis()
 
 
@@ -96,6 +101,21 @@ class ForegroundService : Service() {
             timerTikTakEnded()
 
         }
+    }
+
+    private fun updateStorage(leftTime: Long) {
+
+        try {
+            val sharedPreferences: SharedPreferences = getSharedPreferences(STORE_NAME, MODE_PRIVATE)
+            val editor = sharedPreferences.edit()
+            editor.clear()
+            editor.putString(TIME_LEFT, leftTime.toString())
+            editor.apply()
+            Log.d("TEST","update SharePreference")
+        } catch (e: Exception) {
+            Log.d("TEST","Error update SharePreference")
+        }
+
     }
 
     private fun timerTikTakEnded() {
@@ -109,6 +129,7 @@ class ForegroundService : Service() {
 
 
     private fun commandStop() {
+
         if (!isServiceStarted) {
             return
         }
@@ -117,6 +138,7 @@ class ForegroundService : Service() {
             job?.cancel()
             stopForeground(true)
             stopSelf()
+            Log.d("TEST","Service command stop")
         } finally {
             isServiceStarted = false
         }

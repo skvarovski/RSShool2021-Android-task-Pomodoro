@@ -1,6 +1,8 @@
 package ru.lacars.mypomodo
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -17,7 +19,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private val stopwatchAdapter = StopwatchAdapter(this)
     private val stopwatches = mutableListOf<Stopwatch>()
     private var nextId = 0
-    private var startTime = 0L
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,18 +28,26 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        stopwatchAdapter.setHasStableIds(true)
+
         binding.recycler.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = stopwatchAdapter
+
         }
 
         binding.addNewStopwatchButton.setOnClickListener {
-            val currentMs = binding.etAddTime.text.toString().toLong()*60*100
-            val stopwatchItem = Stopwatch(nextId++, currentMs, currentMs, false)
-            stopwatches.add(stopwatchItem)
-            //Log.d("TEST","time add MS is = ${currentMs}")
-            Log.d("TEST","add item = ${stopwatchItem}")
-            stopwatchAdapter.submitList(stopwatches.toList())
+            if (stopwatches.size < 8) {
+                val currentMs = binding.etAddTime.text.toString().toLong()*60*1000
+                val stopwatchItem = Stopwatch(nextId++, currentMs, currentMs, false)
+                stopwatches.add(stopwatchItem)
+                //Log.d("TEST","time add MS is = ${currentMs}")
+                Log.d("TEST","add item = ${stopwatchItem}")
+                stopwatchAdapter.submitList(stopwatches.toList())
+            } else {
+                toast("Limit of timers")
+            }
+
 
         }
 
@@ -88,6 +98,38 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         startService(stopIntent)
 
         //необходимо получить оставшеся время и попытаться продолжить отсчёт
+        loadLeftTimeFromStorageAndContinue()
+    }
+
+    private fun loadLeftTimeFromStorageAndContinue() {
+        val sharedPreferences: SharedPreferences = getSharedPreferences(STORE_NAME, Context.MODE_PRIVATE)
+        val timeLeft: String? = sharedPreferences.getString(TIME_LEFT, null)
+        if (timeLeft != null) {
+            val stopwatchCurrentTimer = stopwatches.find { it.isStarted }
+            stopwatchCurrentTimer?.currentMs = timeLeft.toLong()
+            stopwatchAdapter.notifyDataSetChanged()
+        }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // замечательный баг :
+        /*  1) запустим таймер и сворачиваем приложение
+            2) запускается фоновый сервис, убиваем свайпом приложение и оно за собой убивает сервис "команда стоп"
+            3) открываем новое "второе" приложение и сворачиваем
+            4) откуда-то появляется предыдущий таймер (из убитого "первого" приложения)
+            5) фоновый сервис продолжает отсчитывать :)
+            6) приходим к тому, что убивая всё - обнуляем список, на всякий случай
+
+         */
+        stopwatches.clear()
+        // stop foreground service
+        Log.d("TEST","Kill foreground service when kill app")
+        val stopIntent = Intent(this, ForegroundService::class.java)
+        stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
+        startService(stopIntent)
+
     }
 
 
