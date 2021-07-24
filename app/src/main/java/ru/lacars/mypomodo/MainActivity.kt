@@ -1,5 +1,6 @@
 package ru.lacars.mypomodo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -10,13 +11,14 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.*
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import ru.lacars.mypomodo.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val stopwatchAdapter = StopwatchAdapter(this)
+    private var stopwatchAdapter = StopwatchAdapter(this)
     private val stopwatches = mutableListOf<Stopwatch>()
     private var nextId = 0
 
@@ -28,22 +30,31 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        stopwatchAdapter.setHasStableIds(true)
+        //stopwatchAdapter.setHasStableIds(true)
 
-        binding.recycler.apply {
+        binding.recycler.adapter = stopwatchAdapter
+        binding.recycler.layoutManager = LinearLayoutManager(this)
+        /*binding.recycler.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = stopwatchAdapter
 
-        }
+        }*/
 
         binding.addNewStopwatchButton.setOnClickListener {
-            if (stopwatches.size < 8) {
-                val currentMs = binding.etAddTime.text.toString().toLong()*60*1000
-                val stopwatchItem = Stopwatch(nextId++, currentMs, currentMs, false)
-                stopwatches.add(stopwatchItem)
-                //Log.d("TEST","time add MS is = ${currentMs}")
-                Log.d("TEST","add item = ${stopwatchItem}")
-                stopwatchAdapter.submitList(stopwatches.toList())
+            if (stopwatches.size < 6) {
+                if (binding.etAddTime.text.toString().toLong() > 0L) {
+
+                    val currentMs = binding.etAddTime.text.toString().toLong()*60*1000
+                    val stopwatchItem = Stopwatch(nextId++, currentMs, currentMs, false)
+                    stopwatches.add(stopwatchItem)
+                    //Log.d("TEST","time add MS is = ${currentMs}")
+                    Log.d("TEST","add item = ${stopwatchItem}")
+                    stopwatchAdapter.submitList(stopwatches.toList())
+
+                } else {
+                    toast("Zero input")
+                }
+
             } else {
                 toast("Limit of timers")
             }
@@ -61,13 +72,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }*/
 
 
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        //if (requestCode == REQUEST_CODE_RESUME ) {
-            Log.d("TEST","RESUME REQUEST CODE")
-        //}
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -141,10 +145,32 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         changeStopwatch(id, currentMs, false)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun delete(id: Int) {
         stopwatches.remove(stopwatches.find { it.id == id })
-        stopwatchAdapter.submitList(stopwatches.toList())
-        stopwatchAdapter.notifyDataSetChanged()
+        Log.d("TEST","delete ${stopwatches}")
+        //stopwatchAdapter.notifyItemRemoved(positionId)
+
+        //нашел за пару часов до дедлайна баг на новой версии:
+        /**
+         * если удаляется последний холдер, то он "подвисает"
+         * лечиться это через переназначение новых экземпляров настроек
+         * увы , я бы с радостью разобрался, но это хотфикс сейчас.
+         */
+        if (stopwatches.size == 0) {
+            Log.d("TEST","Size = ${stopwatchAdapter.itemCount}")
+            stopwatches.clear()
+            stopwatchAdapter = StopwatchAdapter(this)
+            binding.recycler.adapter = stopwatchAdapter
+            binding.recycler.layoutManager = LinearLayoutManager(this)
+            stopwatchAdapter.submitList(stopwatches.toList())
+            stopwatchAdapter.notifyDataSetChanged()
+        } else {
+
+            stopwatchAdapter.submitList(stopwatches.toList())
+            stopwatchAdapter.notifyDataSetChanged()
+        }
+
     }
 
     override fun toast(message: String) {

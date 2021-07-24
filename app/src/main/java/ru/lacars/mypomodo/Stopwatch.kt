@@ -7,6 +7,7 @@ data class Stopwatch(
     var startMs: Long,
     var currentMs: Long,
     var isStarted: Boolean,
+    var positionId: Int = 0,
     /*var isFinished: Boolean,*/
 ) {
     var timer: CountDownTimer? = null

@@ -21,13 +21,6 @@ class StopwatchAdapter(
         holder.bind(getItem(position))
     }
 
-    override fun getItemId(position: Int): Long {
-        return super.getItemId(position)
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        return super.getItemViewType(position)
-    }
 
     private companion object {
 
@@ -39,9 +32,9 @@ class StopwatchAdapter(
 
             override fun areContentsTheSame(oldItem: Stopwatch, newItem: Stopwatch): Boolean {
                 return oldItem.currentMs == newItem.currentMs &&
-                        oldItem.isStarted == newItem.isStarted
-                        /*&& oldItem.isFinished == newItem.isFinished &&
-                        oldItem.startMs == newItem.startMs*/
+                        oldItem.isStarted == newItem.isStarted /*
+                        && oldItem.positionId ==  newItem.positionId &&
+                        oldItem.startMs == newItem.startMs */
             }
 
             override fun getChangePayload(oldItem: Stopwatch, newItem: Stopwatch) = Any()

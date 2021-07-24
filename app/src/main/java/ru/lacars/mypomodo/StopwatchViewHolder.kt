@@ -17,6 +17,8 @@ class StopwatchViewHolder(
     fun bind(stopwatch: Stopwatch) {
         setIsRecyclable(false)
 
+        stopwatch.positionId = adapterPosition
+
         //назначаем исходные данные
         binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
         binding.circleCustomView.setPeriod(stopwatch.startMs)
@@ -83,11 +85,11 @@ class StopwatchViewHolder(
 
 
         binding.deleteButton.setOnClickListener {
-            //setIsRecyclable(true)
-
+            setIsRecyclable(false)
             stopwatch.isStarted = false
             (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
             stopwatch.timer?.cancel()
+            stopwatch.timer = null
             listener.delete(stopwatch.id)
         }
     }
