@@ -15,7 +15,7 @@ class StopwatchViewHolder(
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(stopwatch: Stopwatch) {
-        setIsRecyclable(false)
+        //setIsRecyclable(false)
 
         stopwatch.positionId = adapterPosition
 
@@ -85,7 +85,7 @@ class StopwatchViewHolder(
 
 
         binding.deleteButton.setOnClickListener {
-            setIsRecyclable(false)
+            //setIsRecyclable(false)
             stopwatch.isStarted = false
             (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
             stopwatch.timer?.cancel()

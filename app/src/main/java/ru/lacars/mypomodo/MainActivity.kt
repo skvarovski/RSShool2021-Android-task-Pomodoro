@@ -41,7 +41,10 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }*/
 
         binding.addNewStopwatchButton.setOnClickListener {
-            if (stopwatches.size < 6) {
+            if (stopwatches.size < 160) {
+                if (binding.etAddTime.text.toString().isEmpty()) {
+                    return@setOnClickListener
+                }
                 if (binding.etAddTime.text.toString().toLong() > 0L) {
 
                     val currentMs = binding.etAddTime.text.toString().toLong()*60*1000
@@ -157,7 +160,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
          * лечиться это через переназначение новых экземпляров настроек
          * увы , я бы с радостью разобрался, но это хотфикс сейчас.
          */
-        if (stopwatches.size == 0) {
+        /*if (stopwatches.size == 0) {
             Log.d("TEST","Size = ${stopwatchAdapter.itemCount}")
             stopwatches.clear()
             stopwatchAdapter = StopwatchAdapter(this)
@@ -165,11 +168,11 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             binding.recycler.layoutManager = LinearLayoutManager(this)
             stopwatchAdapter.submitList(stopwatches.toList())
             stopwatchAdapter.notifyDataSetChanged()
-        } else {
+        } else {*/
 
             stopwatchAdapter.submitList(stopwatches.toList())
-            stopwatchAdapter.notifyDataSetChanged()
-        }
+            //stopwatchAdapter.notifyDataSetChanged()
+        //}
 
     }
 
@@ -182,8 +185,14 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
         stopwatches.forEach {
             if (it.id == id) {
-                it.isStarted = isStarted
-                it.currentMs = currentMs ?: it.currentMs
+                stopwatches[id] = Stopwatch(
+                    id,
+                    it.startMs,
+                    currentMs ?: it.currentMs,
+                    isStarted)
+
+                /*it.isStarted = isStarted
+                it.currentMs = currentMs ?: it.currentMs*/
             } else {
                 it.isStarted = false
             }
@@ -193,7 +202,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         //stopwatches.clear()
         //stopwatches.addAll(newTimers)
         stopwatchAdapter.submitList(stopwatches.toList())
-        stopwatchAdapter.notifyDataSetChanged()
+        //stopwatchAdapter.notifyDataSetChanged()
 
     }
 
